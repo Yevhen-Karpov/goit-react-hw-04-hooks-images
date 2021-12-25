@@ -1,77 +1,77 @@
-import React, { Component } from 'react';
-import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import { animateScroll as scroll } from 'react-scroll';
+import ImageGalleryItem from '../ImageGallery/ImageGalleryItem/ImageGalleryItem';
 import Loader from '../Loader/Loader';
 import Button from '../Button/Button';
 import api from '../../services/apiService';
 import s from './ImageGallery.module.css';
 
-export default class ImageGallery extends Component {
-  state = {
-    cards: [],
-    status: 'idle',
+export default function ImageGallery({ text }) {
+  const [cards, setCards] = useState([]);
+  const [status, setStatus] = useState('idle');
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    if (!text) {
+      return;
+    }
+    setPage(1);
+    setCards([]);
+    setStatus('pending');
+    handleRenderPage();
+    scroll.scrollToBottom();
+    // eslint-disable-next-line
+  }, [text]);
+
+  const handleRenderPage = async () => {
+    try {
+      const { hits } = await api.fetchApi(text);
+      setCards([...hits]);
+      setStatus('resolved');
+      setPage(prevState => prevState + 1);
+    } catch (e) {
+      setStatus('rejected');
+    }
   };
 
-  async componentDidUpdate(prevProps, prevState) {
-    if (prevProps.text !== this.props.text) {
-      this.setState({ status: 'pending', cards: [] });
-      await this.handleRenderPage();
-    }
-  }
-
-  handleRenderPage = async () => {
-    const { text, page } = this.props;
-
+  const handleAddPage = async () => {
     try {
       const { hits } = await api.fetchApi(text, page);
-      this.setState(prevState => ({
-        cards: [...prevState.cards, ...hits],
-        status: 'resolved',
-        page: 2,
-      }));
+      setCards([...cards, ...hits]);
+      setStatus('resolved');
+      setPage(prevState => prevState + 1);
     } catch (e) {
-      this.setState({ status: 'rejected' });
+      setStatus('rejected');
     }
   };
 
-  handleAddPage = async () => {
-    try {
-      const { hits } = await api.fetchApi(this.props.text, this.state.page);
-      this.setState(prevState => ({
-        cards: [...prevState.cards, ...hits],
-        status: 'resolved',
-        page: 2,
-      }));
-    } catch (e) {
-      this.setState({ status: 'rejected' });
-    }
-  };
+  return (
+    <>
+      {status === 'idle' && (
+        <p className={s.text}>Введите слово, чтобы начать поиск.</p>
+      )}
 
-  render() {
-    const { status, cards } = this.state;
+      {status === 'pending' && <Loader />}
 
-    return (
-      <>
-        {status === 'idle' && (
-          <p className={s.text}>Введите слово, чтобы начать поиск.</p>
-        )}
+      {!cards.length && status === 'resolved' && (
+        <p className={s.text}>Нет результатов поиска по данному запросу.</p>
+      )}
 
-        {status === 'pending' && <Loader />}
-
-        {!cards.length && status === 'resolved' && (
-          <p className={s.text}>Нет результатов поиска по данному запросу.</p>
-        )}
-
-        {cards.length !== 0 && status === 'resolved' && (
-          <>
-            <ul className={s.gallery}>
-              {cards.map(card => (
-                <ImageGalleryItem card={card} key={card.id} />
-              ))}
-            </ul>
-            <Button onClick={this.handleAddPage} />
-          </>
-        )}
-      </>
-    );
-  }
+      {cards.length !== 0 && status === 'resolved' && (
+        <>
+          <ul className={s.gallery}>
+            {cards.map(card => (
+              <ImageGalleryItem card={card} key={card.id} />
+            ))}
+          </ul>
+          <Button onClick={handleAddPage} />
+        </>
+      )}
+    </>
+  );
 }
+
+ImageGallery.propTypes = {
+  text: PropTypes.string.isRequired,
+};
