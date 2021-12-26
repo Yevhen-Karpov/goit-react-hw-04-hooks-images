@@ -1,16 +1,12 @@
-import axios from 'axios';
+const axios = require('axios');
+const BASE_URL = 'https://pixabay.com/api';
+const API_KEY = '23964778-a3e050be7e1391d793e3046e4';
 
-axios.defaults.baseURL = 'https://pixabay.com/api';
-axios.defaults.params = {
-  key: '23964778-a3e050be7e1391d793e3046e4',
-  image_type: 'photo',
-  orientation: 'horizontal',
-  per_page: 12,
-};
-
-async function fetchApi(q, page) {
+async function fetchApi(text, page) {
   try {
-    const { data } = await axios.get('', { params: { q, page } });
+    const { data } = await axios.get(
+      `${BASE_URL}/?q=${text}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`,
+    );
     return data;
   } catch (error) {
     console.error(`Нет результатов поиска по данному запросу`);
