@@ -8,8 +8,8 @@ import s from './Searchbar.module.css';
 export default function Searchbar({ onSubmit }) {
   const [text, setText] = useState('');
 
-  const handleInputChange = e => {
-    setText(e.currentTarget.value.toLowerCase());
+  const handleInputChange = ({ currentTarget: { value } }) => {
+    setText(value.toLowerCase());
   };
 
   const handleSubmit = e => {

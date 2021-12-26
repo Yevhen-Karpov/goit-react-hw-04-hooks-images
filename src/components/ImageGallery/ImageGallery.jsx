@@ -13,27 +13,26 @@ export default function ImageGallery({ text }) {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (!text) {
-      return;
-    }
-    setPage(1);
-    setCards([]);
-    setStatus('pending');
+    const handleRenderPage = async () => {
+      if (!text) {
+        return;
+      }
+      setPage(1);
+      setCards([]);
+      setStatus('pending');
+      try {
+        const { hits } = await api.fetchApi(text);
+        setCards([...hits]);
+        setStatus('resolved');
+        setPage(prevState => prevState + 1);
+      } catch (e) {
+        setStatus('rejected');
+      }
+    };
     handleRenderPage();
-    scroll.scrollToBottom();
+
     // eslint-disable-next-line
   }, [text]);
-
-  const handleRenderPage = async () => {
-    try {
-      const { hits } = await api.fetchApi(text);
-      setCards([...hits]);
-      setStatus('resolved');
-      setPage(prevState => prevState + 1);
-    } catch (e) {
-      setStatus('rejected');
-    }
-  };
 
   const handleAddPage = async () => {
     try {
@@ -41,6 +40,7 @@ export default function ImageGallery({ text }) {
       setCards([...cards, ...hits]);
       setStatus('resolved');
       setPage(prevState => prevState + 1);
+      scroll.scrollToBottom();
     } catch (e) {
       setStatus('rejected');
     }
